@@ -6,7 +6,7 @@ typealias PeripheralID = UUID
 typealias ServiceID = CBUUID
 typealias CharacteristicID = CBUUID
 
-typealias ServiceData = [ServiceID: Data]
+typealias ServiceData = [ServiceID]
 typealias AdvertisementData = [String: Any]
 
 final class Central {
