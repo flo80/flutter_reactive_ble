@@ -10,20 +10,24 @@ final class PeripheralTaskRegistry<Controller: PeripheralTaskController> {
 
     var log: (String) -> Void = { _ in }
 
+	@discardableResult
     func registerTask(
         key: Task.Key,
         params: Task.Params,
         timeout: Task.Timeout? = nil,
         completion: @escaping Task.CompletionHandler
-    ) {
+	) -> Any {
         let task = Task(
             key: key,
             params: params,
             timeout: timeout,
             completion: completion
         )
-        tasks.add(task)
+
+		let record = tasks.add(task)
         log("\(Controller.TaskSpec.tag) op enqueued, \(tasks.count) in queue, \(tasks.totalAdded) have been added over the lifetime")
+
+		return record
     }
 
     func updateTask(
@@ -53,6 +57,35 @@ final class PeripheralTaskRegistry<Controller: PeripheralTaskController> {
             }
         )
     }
+
+	func updateTask(
+		token: Any,
+		action: (Controller) -> Task
+	) {
+		guard let record = token as? TaskQueue.Record
+		else { return }
+
+		let taskController = Controller(record.task)
+		let updatedTask = action(taskController)
+
+		updatedTask.iif(
+			finished: { duration, result in
+				log("\(Controller.TaskSpec.tag) op finished in \(duration) s, \(tasks.count - 1) in queue")
+				updatedTask.completion(result)
+				remove(record.uniqueID)
+			},
+			otherwise: {
+				tasks.update(record.with(task: updatedTask))
+				if  case .pending = record.task.state,
+					case .processing = updatedTask.state,
+					let timeout = record.task.timeout
+				{
+					scheduleTaskTimeout(record.uniqueID, timeout)
+				}
+			}
+		)
+	}
+
 
     func updateTasks(
         in group: Task.Group,
@@ -107,11 +140,14 @@ final class PeripheralTaskRegistry<Controller: PeripheralTaskController> {
         var count: Int { return records.count }
         var totalAdded: Int { return counter.value }
 
-        func add(_ task: Task) {
-            records.append(Record(
-                uniqueID: counter.increment(),
-                task: task
-            ))
+		@discardableResult
+        func add(_ task: Task) -> Record {
+			let r = Record(
+				uniqueID: counter.increment(),
+				task: task
+			)
+            records.append(r)
+			return r
         }
 
         func firstWith(key: Task.Key) -> Record? {
