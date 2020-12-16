@@ -39,7 +39,7 @@ final class PluginController {
 
                 let serviceData = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? ServiceData ?? []
                 let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data ?? Data();
-                let name = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? peripheral.name ?? String();
+                let name = peripheral.name ?? (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? String()
 
                 let deviceDiscoveryMessage = DeviceScanInfo.with {
                     $0.id = peripheral.identifier.uuidString
