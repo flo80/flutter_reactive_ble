@@ -240,7 +240,7 @@ final class Central {
         guard characteristic.properties.contains(.write)
         else { throw Failure.notWritable(qualifiedCharacteristic) }
 
-        characteristicWriteRegistry.registerTask(
+        let token = characteristicWriteRegistry.registerTask(
             key: qualifiedCharacteristic,
             params: .init(value: value),
             completion: papply(weak: self) { central, error in
@@ -249,7 +249,7 @@ final class Central {
         )
 
         characteristicWriteRegistry.updateTask(
-            key: qualifiedCharacteristic,
+			token: token,
             action: { $0.start(peripheral: characteristic.service.peripheral) }
         )
     }
