@@ -3,7 +3,7 @@ version '1.0-SNAPSHOT'
 
 buildscript {
     ext.detekt_version = '1.14.1'
-    ext.kotlin_version = '1.4.10'
+    ext.kotlin_version = '1.4.21'
     repositories {
         google()
         jcenter()
@@ -13,11 +13,11 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.13'
+        classpath 'com.android.tools.build:gradle:4.1.2'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.14'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:$detekt_version"
-        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.3.2.0"
+        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.0.0"
     }
 }
 
@@ -46,8 +46,9 @@ android {
         }
     }
     defaultConfig {
-        minSdkVersion 24
+        minSdkVersion 21
         targetSdkVersion 30
+        consumerProguardFiles 'proguard-rules.txt'
     }
     lintOptions {
         disable 'InvalidPackage'
@@ -64,17 +65,15 @@ detekt {
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.6.1'
+        artifact = 'com.google.protobuf:protoc:3.13.0'
     }
-    plugins {
-        javalite {
-            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
-        }
-    }
+
     generateProtoTasks {
         all().each { task ->
-            task.plugins {
-                javalite { }
+            task.builtins {
+                java {
+                    option "lite"
+                }
             }
         }
     }
@@ -83,7 +82,7 @@ protobuf {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.polidea.rxandroidble2:rxandroidble:1.11.1'
-    implementation 'com.google.protobuf:protobuf-lite:3.0.1'
+    implementation 'com.google.protobuf:protobuf-javalite:3.11.0'
     implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
 
